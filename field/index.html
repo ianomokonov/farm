@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet/less" type="text/css" href="style.less" />
+    <script src="https://cdn.jsdelivr.net/npm/less@4.1.1"></script>
+    <title>Document</title>
+  </head>
+  <body>
+    <div class="states"></div>
+    <canvas id="field">Обновите браузер</canvas>
+    <script>
+      let field = document.getElementById("field");
+      const places = [];
+      const placeSize = 200;
+      field.width = window.innerWidth * 2;
+      field.height = window.innerHeight * 2;
+      const ctx = field.getContext("2d");
+      ctx.scale(2, 2);
+
+      document.addEventListener("click", ({ pageX, pageY }) => {
+        if (places.length) {
+          const nearPlace = places.reduce((prev, p) => {
+            if (prev.invalid) {
+              return prev;
+            }
+            const yDelta = pageY - p.y;
+            const xDelta = pageX - p.x;
+            if (xDelta > 0) {
+              if (yDelta > 0) {
+                if (xDelta < placeSize && yDelta < placeSize) {
+                  return { invalid: true };
+                }
+                if (prev.has) {
+                  return prev;
+                }
+                return {
+                  has:
+                    (xDelta < placeSize &&
+                      yDelta > placeSize &&
+                      yDelta < placeSize * 2) ||
+                    (xDelta > placeSize &&
+                      xDelta < placeSize * 2 &&
+                      yDelta < placeSize),
+                };
+              }
+              if (prev.has) {
+                return prev;
+              }
+              return {
+                has: xDelta < placeSize && yDelta > -placeSize,
+              };
+            }
+            if (prev.has) {
+              return prev;
+            }
+            return {
+              has: yDelta > 0 && yDelta < placeSize && xDelta > -placeSize,
+            };
+          }, {});
+          if (nearPlace.invalid || !nearPlace.has) {
+            return;
+          }
+        }
+        ctx.beginPath();
+        ctx.rect(
+          pageX - placeSize / 2,
+          pageY - placeSize / 2,
+          placeSize,
+          placeSize
+        );
+        ctx.closePath();
+        ctx.fillStyle = "#5da130";
+        ctx.fill();
+        places.push({ x: pageX - placeSize / 2, y: pageY - placeSize / 2 });
+      });
+    </script>
+  </body>
+</html>
