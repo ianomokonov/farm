@@ -21,8 +21,9 @@
       ctx.scale(2, 2);
 
       document.addEventListener("click", ({ pageX, pageY }) => {
+        let nearPlace;
         if (places.length) {
-          const nearPlace = places.reduce((prev, p) => {
+          nearPlace = places.reduce((prev, p) => {
             if (prev.invalid) {
               return prev;
             }
@@ -36,45 +37,56 @@
                 if (prev.has) {
                   return prev;
                 }
-                return {
-                  has:
-                    (xDelta < placeSize &&
-                      yDelta > placeSize &&
-                      yDelta < placeSize * 2) ||
-                    (xDelta > placeSize &&
-                      xDelta < placeSize * 2 &&
-                      yDelta < placeSize),
-                };
+                if (
+                  xDelta < placeSize &&
+                  yDelta > placeSize &&
+                  yDelta < placeSize * 2
+                ) {
+                  console.log(p, { x: p.x, y: p.y + placeSize });
+                  return { ...prev, has: { x: p.x, y: p.y + placeSize } };
+                }
+
+                if (
+                  xDelta > placeSize &&
+                  xDelta < placeSize * 2 &&
+                  yDelta < placeSize
+                ) {
+                  return { ...prev, has: { x: p.x + placeSize, y: p.y } };
+                }
+                return prev;
               }
               if (prev.has) {
                 return prev;
               }
-              return {
-                has: xDelta < placeSize && yDelta > -placeSize,
-              };
+              if (xDelta < placeSize && yDelta > -placeSize) {
+                return { ...prev, has: { x: p.x, y: p.y - placeSize } };
+              }
+              return prev;
             }
             if (prev.has) {
               return prev;
             }
-            return {
-              has: yDelta > 0 && yDelta < placeSize && xDelta > -placeSize,
-            };
+            if (yDelta > 0 && yDelta < placeSize && xDelta > -placeSize) {
+              return { ...prev, has: { x: p.x - placeSize, y: p.y } };
+            }
+            return prev;
           }, {});
           if (nearPlace.invalid || !nearPlace.has) {
             return;
           }
         }
+        if (!nearPlace) {
+          console.log(111);
+          nearPlace = {
+            has: { x: pageX - placeSize / 2, y: pageY - placeSize / 2 },
+          };
+        }
         ctx.beginPath();
-        ctx.rect(
-          pageX - placeSize / 2,
-          pageY - placeSize / 2,
-          placeSize,
-          placeSize
-        );
+        ctx.rect(nearPlace?.has.x, nearPlace.has.y, placeSize, placeSize);
         ctx.closePath();
         ctx.fillStyle = "#5da130";
         ctx.fill();
-        places.push({ x: pageX - placeSize / 2, y: pageY - placeSize / 2 });
+        places.push(nearPlace.has);
       });
     </script>
   </body>
