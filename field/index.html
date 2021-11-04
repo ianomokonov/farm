@@ -15,79 +15,136 @@
       let field = document.getElementById("field");
       const places = [];
       const placeSize = 200;
+      const placeHolderStroke = 2;
       field.width = window.innerWidth * 2;
       field.height = window.innerHeight * 2;
       const ctx = field.getContext("2d");
       ctx.scale(2, 2);
+      let curPlaceholder;
 
       document.addEventListener("click", ({ pageX, pageY }) => {
         let nearPlace;
-        if (places.length) {
-          nearPlace = places.reduce((prev, p) => {
-            if (prev.invalid) {
-              return prev;
-            }
-            const yDelta = pageY - p.y;
-            const xDelta = pageX - p.x;
-            if (xDelta > 0) {
-              if (yDelta > 0) {
-                if (xDelta < placeSize && yDelta < placeSize) {
-                  return { invalid: true };
-                }
-                if (prev.has) {
-                  return prev;
-                }
-                if (
-                  xDelta < placeSize &&
-                  yDelta > placeSize &&
-                  yDelta < placeSize * 2
-                ) {
-                  console.log(p, { x: p.x, y: p.y + placeSize });
-                  return { ...prev, has: { x: p.x, y: p.y + placeSize } };
-                }
+        if (places.length && !curPlaceholder) {
+          return;
+        }
+        if (!places?.length) {
+          nearPlace = {
+            has: { x: pageX - placeSize / 2, y: pageY - placeSize / 2 },
+          };
+        }
+        if (!nearPlace) {
+          nearPlace = {
+            has: curPlaceholder,
+          };
+        }
 
-                if (
-                  xDelta > placeSize &&
-                  xDelta < placeSize * 2 &&
-                  yDelta < placeSize
-                ) {
-                  return { ...prev, has: { x: p.x + placeSize, y: p.y } };
-                }
-                return prev;
+        clearPlaceholder();
+        ctx.beginPath();
+        ctx.rect(nearPlace?.has.x, nearPlace.has.y, placeSize, placeSize);
+        ctx.closePath();
+        ctx.fillStyle = "#009933";
+        ctx.fill();
+        places.push(nearPlace.has);
+      });
+      function setPlaceholder(pageX, pageY) {
+        if (!places.length) {
+          return;
+        }
+        const nearPlace = getNearPlace(places, pageX, pageY);
+        if (nearPlace.invalid || !nearPlace.has) {
+          clearPlaceholder();
+
+          return;
+        }
+        if (
+          curPlaceholder &&
+          curPlaceholder.x === nearPlace.has.x &&
+          curPlaceholder.y === nearPlace.has.y
+        ) {
+          return;
+        }
+        clearPlaceholder();
+
+        curPlaceholder = nearPlace.has;
+        ctx.strokeStyle = "#000";
+        ctx.lineWidth = placeHolderStroke;
+        ctx.beginPath();
+
+        ctx.strokeRect(
+          nearPlace.has.x + placeHolderStroke,
+          nearPlace.has.y + placeHolderStroke,
+          placeSize - 2 * placeHolderStroke,
+          placeSize - 2 * placeHolderStroke
+        );
+        ctx.closePath();
+      }
+      document.addEventListener("mousemove", ({ pageX, pageY }) => {
+        requestAnimationFrame(() => setPlaceholder(pageX, pageY));
+      });
+
+      function clearPlaceholder() {
+        if (curPlaceholder) {
+          ctx.clearRect(
+            curPlaceholder.x,
+            curPlaceholder.y,
+            placeSize,
+            placeSize
+          );
+
+          curPlaceholder = null;
+        }
+      }
+
+      function getNearPlace(places, pageX, pageY) {
+        const nearPlace = places.reduce((prev, p) => {
+          if (prev.invalid) {
+            return prev;
+          }
+          const yDelta = pageY - p.y;
+          const xDelta = pageX - p.x;
+          if (xDelta > 0) {
+            if (yDelta > 0) {
+              if (xDelta < placeSize && yDelta < placeSize) {
+                return { invalid: { x: p.x, y: p.y } };
               }
               if (prev.has) {
                 return prev;
               }
-              if (xDelta < placeSize && yDelta > -placeSize) {
-                return { ...prev, has: { x: p.x, y: p.y - placeSize } };
+              if (
+                xDelta < placeSize &&
+                yDelta > placeSize &&
+                yDelta < placeSize * 2
+              ) {
+                return { ...prev, has: { x: p.x, y: p.y + placeSize } };
+              }
+
+              if (
+                xDelta > placeSize &&
+                xDelta < placeSize * 2 &&
+                yDelta < placeSize
+              ) {
+                return { ...prev, has: { x: p.x + placeSize, y: p.y } };
               }
               return prev;
             }
             if (prev.has) {
               return prev;
             }
-            if (yDelta > 0 && yDelta < placeSize && xDelta > -placeSize) {
-              return { ...prev, has: { x: p.x - placeSize, y: p.y } };
+            if (xDelta < placeSize && yDelta > -placeSize) {
+              return { ...prev, has: { x: p.x, y: p.y - placeSize } };
             }
             return prev;
-          }, {});
-          if (nearPlace.invalid || !nearPlace.has) {
-            return;
           }
-        }
-        if (!nearPlace) {
-          console.log(111);
-          nearPlace = {
-            has: { x: pageX - placeSize / 2, y: pageY - placeSize / 2 },
-          };
-        }
-        ctx.beginPath();
-        ctx.rect(nearPlace?.has.x, nearPlace.has.y, placeSize, placeSize);
-        ctx.closePath();
-        ctx.fillStyle = "#5da130";
-        ctx.fill();
-        places.push(nearPlace.has);
-      });
+          if (prev.has) {
+            return prev;
+          }
+          if (yDelta > 0 && yDelta < placeSize && xDelta > -placeSize) {
+            return { ...prev, has: { x: p.x - placeSize, y: p.y } };
+          }
+          return prev;
+        }, {});
+        return nearPlace;
+      }
     </script>
   </body>
 </html>
