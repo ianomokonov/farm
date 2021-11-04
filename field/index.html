@@ -14,13 +14,14 @@
     <script>
       let field = document.getElementById("field");
       const places = [];
-      const placeSize = 200;
+      const placeSize = 50;
       const placeHolderStroke = 2;
       field.width = window.innerWidth * 2;
       field.height = window.innerHeight * 2;
       const ctx = field.getContext("2d");
       ctx.scale(2, 2);
       let curPlaceholder;
+      let curPlace;
 
       document.addEventListener("click", ({ pageX, pageY }) => {
         let nearPlace;
@@ -39,22 +40,28 @@
         }
 
         clearPlaceholder();
-        ctx.beginPath();
-        ctx.rect(nearPlace?.has.x, nearPlace.has.y, placeSize, placeSize);
-        ctx.closePath();
-        ctx.fillStyle = "#009933";
-        ctx.fill();
+        drawPlace(nearPlace.has.x, nearPlace.has.y, true);
+        curPlace = nearPlace.has;
         places.push(nearPlace.has);
       });
       function setPlaceholder(pageX, pageY) {
+        if (curPlace) {
+          drawPlace(curPlace.x, curPlace.y);
+          curPlace = null;
+        }
         clearPlaceholder();
         if (!places.length) {
           return;
         }
         const nearPlace = getNearPlace(places, pageX, pageY);
         if (nearPlace.invalid || !nearPlace.has) {
+          if (nearPlace.invalid) {
+            curPlace = nearPlace.invalid;
+            drawPlace(curPlace.x, curPlace.y, true);
+          }
           return;
         }
+
         if (
           curPlaceholder &&
           curPlaceholder.x === nearPlace.has.x &&
@@ -91,6 +98,14 @@
 
           curPlaceholder = null;
         }
+      }
+
+      function drawPlace(x, y, active = false) {
+        ctx.beginPath();
+        ctx.rect(x, y, placeSize, placeSize);
+        ctx.closePath();
+        ctx.fillStyle = active ? "#000" : "#009933";
+        ctx.fill();
       }
 
       function getNearPlace(places, pageX, pageY) {
