@@ -47,13 +47,12 @@
         places.push(nearPlace.has);
       });
       function setPlaceholder(pageX, pageY) {
+        clearPlaceholder();
         if (!places.length) {
           return;
         }
         const nearPlace = getNearPlace(places, pageX, pageY);
         if (nearPlace.invalid || !nearPlace.has) {
-          clearPlaceholder();
-
           return;
         }
         if (
@@ -63,7 +62,6 @@
         ) {
           return;
         }
-        clearPlaceholder();
 
         curPlaceholder = nearPlace.has;
         ctx.strokeStyle = "#000";
@@ -102,26 +100,26 @@
           }
           const yDelta = pageY - p.y;
           const xDelta = pageX - p.x;
-          if (xDelta > 0) {
-            if (yDelta > 0) {
-              if (xDelta < placeSize && yDelta < placeSize) {
+          if (xDelta >= 0) {
+            if (yDelta >= 0) {
+              if (xDelta <= placeSize && yDelta <= placeSize) {
                 return { invalid: { x: p.x, y: p.y } };
               }
               if (prev.has) {
                 return prev;
               }
               if (
-                xDelta < placeSize &&
+                xDelta <= placeSize &&
                 yDelta > placeSize &&
-                yDelta < placeSize * 2
+                yDelta <= placeSize * 2
               ) {
                 return { ...prev, has: { x: p.x, y: p.y + placeSize } };
               }
 
               if (
                 xDelta > placeSize &&
-                xDelta < placeSize * 2 &&
-                yDelta < placeSize
+                xDelta <= placeSize * 2 &&
+                yDelta <= placeSize
               ) {
                 return { ...prev, has: { x: p.x + placeSize, y: p.y } };
               }
@@ -130,7 +128,7 @@
             if (prev.has) {
               return prev;
             }
-            if (xDelta < placeSize && yDelta > -placeSize) {
+            if (xDelta <= placeSize && yDelta >= -placeSize) {
               return { ...prev, has: { x: p.x, y: p.y - placeSize } };
             }
             return prev;
@@ -138,7 +136,7 @@
           if (prev.has) {
             return prev;
           }
-          if (yDelta > 0 && yDelta < placeSize && xDelta > -placeSize) {
+          if (yDelta > 0 && yDelta <= placeSize && xDelta >= -placeSize) {
             return { ...prev, has: { x: p.x - placeSize, y: p.y } };
           }
           return prev;
